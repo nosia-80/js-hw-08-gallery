@@ -63,3 +63,108 @@ const galleryItems = [
     description: 'Lighthouse Coast Sea',
   },
 ];
+
+const refs = {
+  galleryContainer: document.querySelector('.js-gallery'),
+  lightboxContainer: document.querySelector('.js-lightbox'),
+  lightboxOverlay: document.querySelector('.lightbox__overlay'),
+  lightboxImageEl: document.querySelector('.lightbox__image'),
+  closeLightboxBtnEl: document.querySelector('[data-action="close-lightbox"]'),
+};
+let imagesSrcArray = [];
+
+refs.galleryContainer.innerHTML = createGalleryItemsMarkup(galleryItems);
+
+refs.galleryContainer.addEventListener('click', onGalleryContainerClick);
+refs.lightboxOverlay.addEventListener('click', onCloseModal);
+refs.closeLightboxBtnEl.addEventListener('click', onCloseModal);
+
+function createGalleryItemsMarkup(items) {
+  return items
+    .map(({ preview, original, description }) => {
+      return `
+    <li class="gallery__item">
+      <a
+        class="gallery__link"
+        href="${original}"
+      >
+        <img
+          class="gallery__image"
+          src="${preview}"
+          data-source="${original}"
+          alt="${description}"
+        />
+      </a>
+    </li>
+    `;
+    })
+    .join('');
+}
+
+function onGalleryContainerClick(evt) {
+  if (evt.target.nodeName !== 'IMG') {
+    return;
+  }
+
+  evt.preventDefault();
+  const imageEl = evt.target;
+
+  onOpenModal();
+  setLargeImageSrc(imageEl);
+  imagesSrcArray = galleryItems.map(image => image.original);
+}
+
+function onOpenModal() {
+  window.addEventListener('keydown', onKeyPress);
+
+  refs.lightboxContainer.classList.add('is-open');
+}
+
+function setLargeImageSrc(image) {
+  const largeImageURL = image.dataset.source;
+  const largeImageAlt = image.alt;
+
+  refs.lightboxImageEl.src = largeImageURL;
+  refs.lightboxImageEl.alt = largeImageAlt;
+}
+
+function onCloseModal() {
+  window.removeEventListener('keydown', onKeyPress);
+
+  refs.lightboxContainer.classList.remove('is-open');
+  clearLargeImageSrc();
+}
+
+function clearLargeImageSrc() {
+  refs.lightboxImageEl.src = '';
+  refs.lightboxImageEl.alt = '';
+}
+
+function onKeyPress(evt) {
+  const ESC_KEY_CODE = 'Escape';
+  const LEFT_KEY_CODE = 'ArrowLeft';
+  const RIGHT_KEY_CODE = 'ArrowRight';
+  const indexOfCurrentImg = imagesSrcArray.indexOf(refs.lightboxImageEl.src);
+
+  if (evt.code === ESC_KEY_CODE) {
+    onCloseModal();
+  } else if (evt.code === LEFT_KEY_CODE) {
+    onLeftKeyPress(indexOfCurrentImg);
+  } else if (evt.code === RIGHT_KEY_CODE) {
+    onRightKeyPress(indexOfCurrentImg);
+  }
+}
+
+function onLeftKeyPress(index) {
+  refs.lightboxImageEl.src =
+    index === 0
+      ? imagesSrcArray[imagesSrcArray.length - 1]
+      : imagesSrcArray[index - 1];
+}
+
+function onRightKeyPress(index) {
+  refs.lightboxImageEl.src =
+    index === imagesSrcArray.length - 1
+      ? imagesSrcArray[0]
+      : imagesSrcArray[index + 1];
+}
